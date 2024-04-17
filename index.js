@@ -5,7 +5,7 @@ const squareHeight = 30;
 const height = canvasHeight/squareHeight;
 const width = canvasWidth/squareHeight;
 
-function draw(pieces) {
+function draw(pieces, queue) {
     const canvas = document.getElementById("canvas");
     if (canvas.getContext) {
         const ctx = canvas.getContext("2d");
@@ -35,15 +35,18 @@ function draw(pieces) {
                 ctx.fillRect((p[j][0]+x)*squareHeight,(p[j][1]+y)*squareHeight, squareHeight, squareHeight);
             }
         }
+        //draw queue
+
     }
 }
 
 /* look at this later https://stackoverflow.com/questions/54562790/cannot-set-property-which-only-has-getter-javascript-es6*/
 class Piece {
-    constructor(pos, piecePos, color) {
+    constructor(pos, piecePos, color, id) {
       this.pos_ = pos;
       this.piecePos_ = piecePos;
       this.color_ = color;
+      this.id_ = id
     }
     get pos(){
         return this.pos_;
@@ -54,6 +57,9 @@ class Piece {
     get color(){
         return this.color_;
     }
+    get id(){
+        return this.id_;
+    }
     set pos(pos){
         this.pos_=pos;
     }
@@ -61,18 +67,38 @@ class Piece {
 
 var game=true;
 var speed=100; //inverse scale - lower number = faster speed
-var pieceList=[[[0,0], [1,0], [0,-1], [1,-1]]];  //0,0 at the bottom left corner of the object
-var piece = new Piece([2,2], pieceList[0], "#F06292");
+//piece order: T, J, Z, S, I, L, O
+var pieceList=[[[0,-1], [1,-1], [1,0], [2,-1]], [[0,0], [1,0], [1,-1], [1,-2]], [[0,-1], [1,-1], [1,0], [2,0]], [[0,0], [1,0], [1,-1], [2,-1]], [[0,0], [0,-1], [0,-2], [0,-3]], [[0,0], [1,0], [0,-1], [0,-2]], [[0,0], [1,0], [0,-1], [1,-1]]];  //0,0 at the bottom left corner of the object
+
+var firstInv;
+
+var secondInv;
+
+var thirdInv;
+
+var colors=["#b642f5", "#4542f5", "#45cc33", "#cf2e2b", "#32ede4", "#e38a1e", "#f5e342"]
+
+var piece = new Piece([2,2], pieceList[0], colors[0], 0);
 var pieces=[piece];
-var free=true; //the piece is free from other pieces (not contacting)
-
-
-window.addEventListener("load", draw(pieces));
-var start=Date.now();
 
 function getRandomInt(max) {
     return Math.floor(Math.random() * max);
 }
+
+function getRandomPiece(){
+    var n=getRandomInt(6);
+    if(pieces.length>1&&n==pieces[1].id){
+        n++;
+    }
+    return new Piece([6,2], pieceList[n], colors[n], n);
+}
+
+var queue=[getRandomPiece(), getRandomPiece(), getRandomPiece(), getRandomPiece()];
+var free=true; //the piece is free from other pieces (not contacting)
+
+
+window.addEventListener("load", draw(pieces, queue));
+var start=Date.now();
 
 function getOccupiedSquares(){
     var l=[];
@@ -129,15 +155,17 @@ function loop(){
             if(free){ //if it is above all other pieces
                 pieces[0].pos = [pieces[0].pos[0], pieces[0].pos[1]+1];
             } else{
-                pieces.unshift(new Piece([6,2], pieceList[0], "#F06292"));
+                pieces.unshift(queue.pop(0));
+                queue.push(getRandomPiece());
                 free=true;
             }
         } else{
-            pieces.unshift(new Piece([6,2], pieceList[0], "#F06292"));
+            pieces.unshift(queue.pop(0));
+            queue.push(getRandomPiece());
         }
 
         //console.log(getOccupiedSquares());
-        draw(pieces);
+        draw(pieces, queue);
         start=Date.now();
     }
     window.requestAnimationFrame(loop);
