@@ -72,23 +72,30 @@ class Piece {
     set pos(pos){
         this.pos_=pos;
     }
+    set piecePos(piecePos){
+        this.piecePos_ = piecePos;
+    }
 }
 
 var game=true;
-var speed=100; //inverse scale - lower number = faster speed
+var speed=200; //inverse scale - lower number = faster speed
+
 //piece order: T, J, Z, S, I, L, O
 var pieceList=[[[0,-1], [1,-1], [1,0], [2,-1]], [[0,0], [1,0], [1,-1], [1,-2]], [[0,-1], [1,-1], [1,0], [2,0]], [[0,0], [1,0], [1,-1], [2,-1]], [[0,0], [0,-1], [0,-2], [0,-3]], [[0,0], [1,0], [0,-1], [0,-2]], [[0,0], [1,0], [0,-1], [1,-1]]];  //0,0 at the bottom left corner of the object
 
-var firstInv;
+//in clockwise order from base stance
+var firstInv=[[[0,-1], [1,0], [1,-1], [1,-2]], [[0,-1], [0,0], [1,0], [2,0]], [[0,0], [0,-1], [1,-1], [1,-2]], [[0,-2], [0,-1], [1,-1], [1,0]], [[0,-2], [1,-2], [2,-2], [3,-2]], [[0,0], [0,-1], [1,-1], [2,-1]], [[0,0], [1,0], [0,-1], [1,-1]]];  //0,0 at the bottom left corner of the object;
 
-var secondInv;
+var secondInv=[[[0,0], [1,0], [1,-1], [2,0]], [[0,0], [0,-1], [0,-2], [1,-2]], [[0,-1], [1,-1], [1,0], [2,0]], [[0,0], [1,0], [1,-1], [2,-1]], [[0,0], [0,-1], [0,-2], [0,-3]], [[0,-2], [1,-2], [1,-1], [1,0]], [[0,0], [1,0], [0,-1], [1,-1]]];  //0,0 at the bottom left corner of the object;
 
-var thirdInv;
+var thirdInv=[[[0,0], [0,-1], [0,-2], [1,-1]], [[0,-1], [1,-1], [2,-1], [2,0]], [[1,0], [1,-1], [2,-1], [2,-2]], [[1,-2], [1,-1], [2,-1], [2,0]], [[0,-2], [1,-2], [2,-2], [3,-2]], [[0,0], [1,0], [2,0], [2,-1]], [[0,0], [1,0], [0,-1], [1,-1]]];  //0,0 at the bottom left corner of the object;
 
 var colors=["#b642f5", "#4542f5", "#45cc33", "#cf2e2b", "#32ede4", "#e38a1e", "#f5e342"]
 
+
 var piece = new Piece([2,2], pieceList[0], colors[0], 0);
 var pieces=[piece];
+var rot=0;
 
 function getRandomInt(max) {
     return Math.floor(Math.random() * max);
@@ -165,12 +172,14 @@ function loop(){
             } else{
                 pieces.unshift(queue.splice(0, 1)[0]);
                 queue.push(getRandomPiece());
+                rot=0;
                 console.log(queue);
                 free=true;
             }
         } else{
             pieces.unshift(queue.splice(0, 1)[0]);
             queue.push(getRandomPiece());
+            rot=0;
         }
 
         //console.log(getOccupiedSquares());
@@ -187,7 +196,20 @@ addEventListener("keydown", (event) => {
     }
     if(event.key=="ArrowLeft"){ pieces[0].pos[0]>0 && freeX(pieces[0])[1] ? (pieces[0].pos = [pieces[0].pos[0]-1, pieces[0].pos[1]]) : pieces[0].pos }//turn left
     if(event.key=="ArrowRight"){ pieces[0].pos[0]<(width-2) && freeX(pieces[0])[0] ? (pieces[0].pos = [pieces[0].pos[0]+1, pieces[0].pos[1]]) : pieces[0].pos }//turn right
-    if(event.key=="ArrowDown"){ direction=1; }//turn down
+    if(event.key=="ArrowUp"){ 
+        rot++;
+        if(rot%4==0){
+            pieces[0].piecePos = pieceList[pieces[0].id];        
+        } else if(rot%4==1){
+            console.log("hello")
+            pieces[0].piecePos = firstInv[pieces[0].id];
+        } else if (rot%4==2){
+            pieces[0].piecePos = secondInv[pieces[0].id];
+        } else if (rot%4==3){
+            pieces[0].piecePos = thirdInv[pieces[0].id];
+        }
+        console.log(pieces[0].piecePos);
+    }//rotate piece clockwise
 });
 
 
