@@ -91,6 +91,26 @@ function getOccupiedSquares(){
     return l.filter((value, index) => l.indexOf(value) === index); //actually implement this properly?
 }
 
+function freeX(piece){ //checks if the piece is free to move in the x direction
+    var p=piece.piecePos;
+    var pos=piece.pos;
+    console.log(pos)
+    var l=getOccupiedSquares();
+    var freeR=true;//free to move right
+    var freeL=true;//free to move left
+    for(i=0;i<p.length;i++){
+        for(j=0;j<l.length;j++){
+            if((p[i][1]+pos[1])==l[j][1] && (p[i][0]+pos[0]+1)==l[j][0]){
+                freeR=false;
+            }
+            if((p[i][1]+pos[1])==l[j][1] && (p[i][0]+pos[0]-1)==l[j][0]){
+                freeL=false;
+            }
+        }
+    }
+    return [freeR, freeL];
+}
+
 //main game loop
 function loop(){
     var now = Date.now();
@@ -100,7 +120,6 @@ function loop(){
             var pos=pieces[0].pos;
             var l=getOccupiedSquares();
             for(i=0;i<p.length;i++){
-                if([p[i][0]+pos[0], p[i][1]+pos[1]])
                 for(j=0;j<l.length;j++){
                     if((p[i][0]+pos[0])==l[j][0] && (p[i][1]+pos[1]+1)==l[j][1]){
                         free=false;
@@ -129,8 +148,8 @@ addEventListener("keydown", (event) => {
     if (event.isComposing) {
         return;
     }
-    if(event.key=="ArrowLeft"){ pieces[0].pos[0]>0 ? (pieces[0].pos = [pieces[0].pos[0]-1, pieces[0].pos[1]]) : pieces[0].pos }//turn left
-    if(event.key=="ArrowRight"){ pieces[0].pos[0]<(width-2) ? (pieces[0].pos = [pieces[0].pos[0]+1, pieces[0].pos[1]]) : pieces[0].pos }//turn right
+    if(event.key=="ArrowLeft"){ pieces[0].pos[0]>0 && freeX(pieces[0])[1] ? (pieces[0].pos = [pieces[0].pos[0]-1, pieces[0].pos[1]]) : pieces[0].pos }//turn left
+    if(event.key=="ArrowRight"){ pieces[0].pos[0]<(width-2) && freeX(pieces[0])[0] ? (pieces[0].pos = [pieces[0].pos[0]+1, pieces[0].pos[1]]) : pieces[0].pos }//turn right
     if(event.key=="ArrowDown"){ direction=1; }//turn down
 });
 
