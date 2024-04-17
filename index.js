@@ -93,7 +93,7 @@ var thirdInv=[[[0,0], [0,-1], [0,-2], [1,-1]], [[0,-1], [1,-1], [2,-1], [2,0]], 
 var colors=["#b642f5", "#4542f5", "#45cc33", "#cf2e2b", "#32ede4", "#e38a1e", "#f5e342"]
 
 
-var piece = new Piece([2,2], pieceList[0], colors[0], 0);
+var piece = new Piece([6,2], pieceList[4], colors[4], 4);
 var pieces=[piece];
 var rot=0;
 
@@ -109,6 +109,7 @@ function getRandomPiece(){
     return new Piece([6,2], pieceList[n], colors[n], n);
 }
 
+var i = new Piece([6,2], pieceList[4], colors[4], 4);
 var queue=[getRandomPiece(), getRandomPiece(), getRandomPiece(), getRandomPiece()];
 var free=true; //the piece is free from other pieces (not contacting)
 
@@ -130,7 +131,7 @@ function getOccupiedSquares(){
         }
     }
     /*https://builtin.com/software-engineering-perspectives/remove-duplicates-from-array-javascript*/
-    return l.filter((value, index) => l.indexOf(value) === index); //actually implement this properly?
+    return l.filter((value, index) => l.indexOf(value) === index); //actually implement this properly? - not needed since pieces cant really clip into others (or else thats a bigger problem)
 }
 
 function freeX(piece){ //checks if the piece is free to move in the x direction
@@ -150,6 +151,23 @@ function freeX(piece){ //checks if the piece is free to move in the x direction
         }
     }
     return [freeR, freeL];
+}
+
+function getFullRows(){
+    var l=getOccupiedSquares();
+    var totals=[];
+    var rows=[];
+    for(i=0;i<height;i++){totals.push(0);}
+    for(j=0;j<l.length;j++){
+        totals[l[j][1]]++
+    }
+    for(k=0;k<totals.length;k++){
+        if(totals[k]==width){
+            rows.push(k);
+        }
+    }
+    console.log(totals, rows);
+    return rows;
 }
 
 //main game loop
@@ -181,6 +199,21 @@ function loop(){
             rot=0;
         }
 
+        var r=getFullRows();
+        if(r.length>0){
+            for(i=0;i<r.length;i++){
+                for(j=0;j<pieces.length;j++){
+                    var p=pieces[j].piecePos;
+                    var pos=pieces[j].pos;
+                    for(k=0;k<p.length;p++){
+                        if((p[k][1]+pos[1])==r[i]){
+                            pieces[j].piecePos = pieces[j].piecePos.splice(k,1);
+                        }
+                    }
+                }
+            }
+        }
+
         //console.log(getOccupiedSquares());
         draw(pieces, queue);
         start=Date.now();
@@ -206,7 +239,9 @@ addEventListener("keydown", (event) => {
         } else if (rot%4==3){
             pieces[0].piecePos = thirdInv[pieces[0].id];
         }
-        console.log(pieces[0].piecePos);
+    }//rotate piece clockwise
+    if(event.key=="ArrowDown"){ 
+        getFullRows();
     }//rotate piece clockwise
 });
 
