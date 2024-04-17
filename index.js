@@ -9,6 +9,7 @@ function draw(pieces, queue) {
     const canvas = document.getElementById("canvas");
     if (canvas.getContext) {
         const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);//clear canvas
 
         //initial board render:
         var style=0;
@@ -36,7 +37,15 @@ function draw(pieces, queue) {
             }
         }
         //draw queue
-
+        for(i=0;i<queue.length;i++){
+            ctx.fillStyle=queue[i].color;
+            var xShift = width+1; //how far off the main game section the blocks will appear
+            var yShift = 3; //initial y offset
+            var p = queue[i].piecePos;
+            for(j=0;j<p.length;j++){
+                ctx.fillRect((p[j][0]+xShift)*squareHeight,(p[j][1]+yShift+i*5)*squareHeight, squareHeight, squareHeight)
+            }
+        }
     }
 }
 
@@ -120,7 +129,6 @@ function getOccupiedSquares(){
 function freeX(piece){ //checks if the piece is free to move in the x direction
     var p=piece.piecePos;
     var pos=piece.pos;
-    console.log(pos)
     var l=getOccupiedSquares();
     var freeR=true;//free to move right
     var freeL=true;//free to move left
@@ -155,12 +163,13 @@ function loop(){
             if(free){ //if it is above all other pieces
                 pieces[0].pos = [pieces[0].pos[0], pieces[0].pos[1]+1];
             } else{
-                pieces.unshift(queue.pop(0));
+                pieces.unshift(queue.splice(0, 1)[0]);
                 queue.push(getRandomPiece());
+                console.log(queue);
                 free=true;
             }
         } else{
-            pieces.unshift(queue.pop(0));
+            pieces.unshift(queue.splice(0, 1)[0]);
             queue.push(getRandomPiece());
         }
 
