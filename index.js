@@ -129,8 +129,8 @@ addEventListener("keydown", (event) => {
     if (event.isComposing) {
         return;
     }
-    if(event.key=="ArrowLeft"){ pieces[0].pos = [pieces[0].pos[0]-1, pieces[0].pos[1]] }//turn left
-    if(event.key=="ArrowRight"){ pieces[0].pos = [pieces[0].pos[0]+1, pieces[0].pos[1]] }//turn right
+    if(event.key=="ArrowLeft"){ pieces[0].pos[0]>0 ? (pieces[0].pos = [pieces[0].pos[0]-1, pieces[0].pos[1]]) : pieces[0].pos }//turn left
+    if(event.key=="ArrowRight"){ pieces[0].pos[0]<(width-2) ? (pieces[0].pos = [pieces[0].pos[0]+1, pieces[0].pos[1]]) : pieces[0].pos }//turn right
     if(event.key=="ArrowDown"){ direction=1; }//turn down
 });
 
