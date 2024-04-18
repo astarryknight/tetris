@@ -125,7 +125,7 @@ class Piece {
 }
 
 var game=true;
-var gameSpeed=600;
+var gameSpeed=1000;
 var speed=gameSpeed; //inverse scale - lower number = faster speed
 
 //piece order: T, J, Z, S, I, L, O
