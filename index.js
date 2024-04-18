@@ -153,6 +153,21 @@ function freeX(piece){ //checks if the piece is free to move in the x direction
     return [freeR, freeL];
 }
 
+function freeY(piece){
+    free=true;
+    var p=piece.piecePos;
+    var pos=piece.pos;
+    var l=getOccupiedSquares();
+    for(i=0;i<p.length;i++){
+        for(j=0;j<l.length;j++){
+            if((p[i][0]+pos[0])==l[j][0] && (p[i][1]+pos[1]+1)==l[j][1]){
+                free=false;
+            }
+        }
+    }
+    return free;
+}
+
 function getFullRows(){
     var l=getOccupiedSquares();
     var totals=[];
@@ -199,16 +214,7 @@ function loop(){
     var now = Date.now();
     if((now-start)>=speed){
         if(pieces[0].pos[1]<height-1){ //if it is above the floor
-            var p=pieces[0].piecePos;
-            var pos=pieces[0].pos;
-            var l=getOccupiedSquares();
-            for(i=0;i<p.length;i++){
-                for(j=0;j<l.length;j++){
-                    if((p[i][0]+pos[0])==l[j][0] && (p[i][1]+pos[1]+1)==l[j][1]){
-                        free=false;
-                    }
-                }
-            }
+            free=freeY(pieces[0]);
             if(free){ //if it is above all other pieces
                 pieces[0].pos = [pieces[0].pos[0], pieces[0].pos[1]+1];
             } else{ //fix this PLEAZESRSEROSEIJFOSEIJFOISEJFOSIEJFOISEJFIO
