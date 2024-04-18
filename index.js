@@ -275,11 +275,24 @@ addEventListener("keydown", (event) => {
         }
     }//rotate piece clockwise
     if(event.key=="ArrowDown"){ 
-        getFullRows();
-    }//rotate piece clockwise
-    if(event.key==" "){ 
         speed=1;
     }//rotate piece clockwise
+    if(event.key==" "){
+        free=freeY(pieces[0])
+        while(free&&pieces[0].pos[1]<(height-1)){
+            pieces[0].pos = [pieces[0].pos[0], pieces[0].pos[1]+1];
+            free=freeY(pieces[0]);
+        }
+    }//quick drop
+});
+
+addEventListener("keyup", (event) => {
+    if (event.isComposing) {
+        return;
+    }
+    if(event.key=="ArrowDown"){ 
+        speed=400;
+    }
 });
 
 
