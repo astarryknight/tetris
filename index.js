@@ -78,7 +78,7 @@ class Piece {
 }
 
 var game=true;
-var speed=200; //inverse scale - lower number = faster speed
+var speed=125; //inverse scale - lower number = faster speed
 
 //piece order: T, J, Z, S, I, L, O
 var pieceList=[[[0,-1], [1,-1], [1,0], [2,-1]], [[0,0], [1,0], [1,-1], [1,-2]], [[0,-1], [1,-1], [1,0], [2,0]], [[0,0], [1,0], [1,-1], [2,-1]], [[0,0], [0,-1], [0,-2], [0,-3]], [[0,0], [1,0], [0,-1], [0,-2]], [[0,0], [1,0], [0,-1], [1,-1]]];  //0,0 at the bottom left corner of the object
@@ -93,8 +93,7 @@ var thirdInv=[[[0,0], [0,-1], [0,-2], [1,-1]], [[0,-1], [1,-1], [2,-1], [2,0]], 
 var colors=["#b642f5", "#4542f5", "#45cc33", "#cf2e2b", "#32ede4", "#e38a1e", "#f5e342"]
 
 
-var piece = new Piece([6,2], pieceList[4], colors[4], 4);
-var pieces=[piece];
+var pieces=[];
 var rot=0;
 
 function getRandomInt(max) {
@@ -109,7 +108,8 @@ function getRandomPiece(){
     return new Piece([6,2], pieceList[n], colors[n], n);
 }
 
-var i = new Piece([6,2], pieceList[4], colors[4], 4);
+pieces.push(getRandomPiece());
+// var i = new Piece([6,2], pieceList[4], colors[4], 4);
 var queue=[getRandomPiece(), getRandomPiece(), getRandomPiece(), getRandomPiece()];
 var free=true; //the piece is free from other pieces (not contacting)
 
@@ -166,8 +166,31 @@ function getFullRows(){
             rows.push(k);
         }
     }
-    console.log(totals, rows);
     return rows;
+}
+
+function clearRows(r){
+    for(i=0;i<r.length;i++){ //iterating through each full row
+        for(j=1;j<pieces.length;j++){ //iterating through each piece in the pieces array
+            var p=pieces[j].piecePos; //array for piece definition positions
+            var pos=pieces[j].pos; //array for position of each piece
+            var test=[];
+            //console.log(p.length);
+            for(k=0;k<p.length;k++){ //iterating through each square in a piece
+                // console.log((p[k][1]+pos[1]));
+                console.log(pieces[j].id, p[k])
+                if(!((p[k][1]+pos[1])==r[i])){ //if the square is NOT in the same horizontal row as the full row
+                    test.push(p[k]);
+                    console.log('where are u bro');
+                }
+            }
+            pieces[j].piecePos=test;//trying this out maybe?
+            // console.log(pieces[j].piecePos);
+
+            //LOOK AT PEIOCE ROTATUOIBNS DUIFHSD IFUHS DIFUSHD IFUHS DIUFHSD UIFHDFS ROTATION
+        }
+    }
+    debugger;
 }
 
 //main game loop
@@ -187,7 +210,7 @@ function loop(){
             }
             if(free){ //if it is above all other pieces
                 pieces[0].pos = [pieces[0].pos[0], pieces[0].pos[1]+1];
-            } else{
+            } else{ //fix this PLEAZESRSEROSEIJFOSEIJFOISEJFOSIEJFOISEJFIO
                 pieces.unshift(queue.splice(0, 1)[0]);
                 queue.push(getRandomPiece());
                 rot=0;
@@ -200,18 +223,8 @@ function loop(){
         }
 
         var r=getFullRows();
-        if(r.length>0){
-            for(i=0;i<r.length;i++){
-                for(j=0;j<pieces.length;j++){
-                    var p=pieces[j].piecePos;
-                    var pos=pieces[j].pos;
-                    for(k=0;k<p.length;p++){
-                        if((p[k][1]+pos[1])==r[i]){
-                            pieces[j].piecePos = pieces[j].piecePos.splice(k,1);
-                        }
-                    }
-                }
-            }
+        if(r.length>0){ //if number of full rows is > 1 (at least one row is full)
+            clearRows(r);
         }
 
         //console.log(getOccupiedSquares());
@@ -226,8 +239,20 @@ addEventListener("keydown", (event) => {
     if (event.isComposing) {
         return;
     }
-    if(event.key=="ArrowLeft"){ freeX(pieces[0])[1] ? (pieces[0].pos = [pieces[0].pos[0]-1, pieces[0].pos[1]]) : pieces[0].pos }//turn left
-    if(event.key=="ArrowRight"){ freeX(pieces[0])[0] ? (pieces[0].pos = [pieces[0].pos[0]+1, pieces[0].pos[1]]) : pieces[0].pos }//turn right
+    if(event.key=="ArrowLeft"){ 
+        if(freeX(pieces[0])[1]){
+            (pieces[0].pos = [pieces[0].pos[0]-1, pieces[0].pos[1]])
+        } else{
+            pieces[0].pos;
+        }
+     }//turn left
+    if(event.key=="ArrowRight"){ 
+        if(freeX(pieces[0])[0]){
+            (pieces[0].pos = [pieces[0].pos[0]+1, pieces[0].pos[1]])
+        } else{
+            pieces[0].pos;
+        }
+     }//turn right
     if(event.key=="ArrowUp"){ 
         rot++;
         if(rot%4==0){
