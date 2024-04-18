@@ -26,6 +26,25 @@ function draw(pieces, queue) {
             style++;
         }
 
+        //calculate shadow
+        var x=pieces[0].pos[0];
+        var y=pieces[0].pos[1];
+        shadow = new Piece([x,y], pieces[0].piecePos, "#B4B3B3", pieces[0].id);
+        free=freeY(shadow)
+        while(free&&shadow.pos[1]<(height-1)){
+            shadow.pos = [shadow.pos[0], shadow.pos[1]+1];
+            free=freeY(shadow);
+        }
+        //draw shadow
+        ctx.fillStyle=shadow.color;
+        var p = shadow.piecePos;
+        var x = shadow.pos[0];
+        var y = shadow.pos[1];
+        for(j=0;j<p.length;j++){
+            ctx.fillRect((p[j][0]+x)*squareHeight,(p[j][1]+y)*squareHeight, squareHeight, squareHeight);
+        }
+
+
         //draw pieces
         for(i=0;i<pieces.length;i++){
             ctx.fillStyle=pieces[i].color;
@@ -95,6 +114,7 @@ var colors=["#b642f5", "#4542f5", "#45cc33", "#cf2e2b", "#32ede4", "#e38a1e", "#
 
 var pieces=[];
 var rot=0;
+var calc=false;
 
 function getRandomInt(max) {
     return Math.floor(Math.random() * max);
@@ -213,6 +233,7 @@ function clearRows(r){
 function loop(){
     var now = Date.now();
     if((now-start)>=speed){
+        calc=true;
         if(pieces[0].pos[1]<height-1){ //if it is above the floor
             free=freeY(pieces[0]);
             if(free){ //if it is above all other pieces
@@ -241,11 +262,12 @@ function loop(){
     }
     draw(pieces, queue);
     window.requestAnimationFrame(loop);
+    calc=false;
 }
 
 //handling keypresses
 addEventListener("keydown", (event) => {
-    if (event.isComposing) {
+    if (event.isComposing || calc) {
         return;
     }
     if(event.key=="ArrowLeft"){ 
@@ -287,7 +309,7 @@ addEventListener("keydown", (event) => {
 });
 
 addEventListener("keyup", (event) => {
-    if (event.isComposing) {
+    if (event.isComposing || calc) {
         return;
     }
     if(event.key=="ArrowDown"){ 
