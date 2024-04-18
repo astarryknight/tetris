@@ -192,13 +192,15 @@ function freeX(piece){ //checks if the piece is free to move in the x direction
     var freeL=true;//free to move left
     for(i=0;i<p.length;i++){
         for(j=0;j<l.length;j++){
-            if(((p[i][1]+pos[1])==l[j][1] && (p[i][0]+pos[0]+1)==l[j][0]) || (p[i][0]+pos[0]+1)>(width-1)){
+            if(((p[i][1]+pos[1])==l[j][1] && (p[i][0]+pos[0]+1)==l[j][0])){
                 freeR=false;
             }
-            if((p[i][1]+pos[1])==l[j][1] && (p[i][0]+pos[0]-1)==l[j][0] || (p[i][0]+pos[0]-1)<0){
+            if((p[i][1]+pos[1])==l[j][1] && (p[i][0]+pos[0]-1)==l[j][0]){
                 freeL=false;
             }
         }
+        if((p[i][0]+pos[0]+1)>(width-1)) { freeR=false; }
+        if((p[i][0]+pos[0]-1)<0) { freeL=false; }
     }
     return [freeR, freeL];
 }
@@ -214,6 +216,22 @@ function freeY(piece){
                 free=false;
             }
         }
+    }
+    return free;
+}
+
+function freeRot(rotPiece){
+    free=true;
+    var p=rotPiece.piecePos;
+    var pos=rotPiece.pos;
+    var l=getOccupiedSquares();
+    for(i=0;i<p.length;i++){
+        for(j=0;j<l.length;j++){
+            if((p[i][0]+pos[0])==l[j][0] && (p[i][1]+pos[1])==l[j][1]){
+                free=false;
+            }
+        }
+        if((p[i][0]+pos[0])<0 || (p[i][0]+pos[0])>(width-1)) { free=false; }
     }
     return free;
 }
@@ -304,6 +322,7 @@ addEventListener("keydown", (event) => {
         return;
     }
     if(event.key=="ArrowLeft"){ 
+        console.log(freeX(pieces[0]))
         if(freeX(pieces[0])[1]){
             (pieces[0].pos = [pieces[0].pos[0]-1, pieces[0].pos[1]])
         } else{
@@ -317,16 +336,25 @@ addEventListener("keydown", (event) => {
             pieces[0].pos;
         }
      }//turn right
-    if(event.key=="ArrowUp"){ 
+    if(event.key=="ArrowUp"){
+        var temp=new Piece(pieces[0].pos, pieces[0].piecePos, pieces[0].color, pieces[0].id);
         rot++;
         if(rot%4==0){
-            pieces[0].piecePos = pieceList[pieces[0].id];        
+            temp.piecePos = pieceList[temp.id];        
         } else if(rot%4==1){
-            pieces[0].piecePos = firstInv[pieces[0].id];
+            temp.piecePos = firstInv[temp.id];
         } else if (rot%4==2){
-            pieces[0].piecePos = secondInv[pieces[0].id];
+            temp.piecePos = secondInv[temp.id];
         } else if (rot%4==3){
-            pieces[0].piecePos = thirdInv[pieces[0].id];
+            temp.piecePos = thirdInv[temp.id];
+        }
+        console.log(pieces[0]);
+        console.log(temp);
+        //debugger;
+        if(freeRot(temp)){
+            pieces[0]=new Piece(temp.pos, temp.piecePos, temp.color, temp.id);
+        } else{
+            r--;
         }
     }//rotate piece clockwise
     if(event.key=="ArrowDown"){ 
