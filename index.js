@@ -65,7 +65,35 @@ function draw(pieces, queue) {
                 ctx.fillRect((p[j][0]+xShift)*squareHeight,(p[j][1]+yShift+i*5)*squareHeight, squareHeight, squareHeight)
             }
         }
+
+        //draw held piece
+        var xOff=width+6;
+        var yOff=5;
+        if(!isEmpty(heldPiece)){ //does it exist? - makes sure it doesn't try to draw nothing
+            ctx.fillStyle=heldPiece.color;
+            var p = heldPiece.piecePos;
+            var x = heldPiece.pos[0];
+            var y = heldPiece.pos[1];
+            for(j=0;j<p.length;j++){
+                ctx.fillRect((p[j][0]+xOff)*squareHeight,(p[j][1]+yOff)*squareHeight, squareHeight, squareHeight);
+            }
+        }
+        //text
+        ctx.fillStyle="#000000";
+        ctx.font = "20px arial";
+        ctx.fillText("Held Piece:", (width+6)*squareHeight, 50);
     }
+}
+
+/*https://stackoverflow.com/questions/679915/how-do-i-test-for-an-empty-javascript-object*/
+function isEmpty(obj) {
+    for (const prop in obj) {
+      if (Object.hasOwn(obj, prop)) {
+        return false;
+      }
+    }
+  
+    return true;
 }
 
 /* look at this later https://stackoverflow.com/questions/54562790/cannot-set-property-which-only-has-getter-javascript-es6*/
@@ -114,6 +142,7 @@ var colors=["#b642f5", "#4542f5", "#45cc33", "#cf2e2b", "#32ede4", "#e38a1e", "#
 
 var pieces=[];
 var rot=0;
+var heldPiece;
 var calc=false;
 
 function getRandomInt(max) {
@@ -132,6 +161,7 @@ pieces.push(getRandomPiece());
 // var i = new Piece([6,2], pieceList[4], colors[4], 4);
 var queue=[getRandomPiece(), getRandomPiece(), getRandomPiece(), getRandomPiece()];
 var free=true; //the piece is free from other pieces (not contacting)
+var hold=true; //can you hold a new piece
 
 
 window.addEventListener("load", draw(pieces, queue));
@@ -210,15 +240,16 @@ function clearRows(r){
             var p=pieces[j].piecePos; //array for piece definition positions
             var pos=pieces[j].pos; //array for position of each piece
             var test=[];
+            var moveDown=[];
             //console.log(p.length);
             for(k=0;k<p.length;k++){ //iterating through each square in a piece
                 if(!((p[k][1]+pos[1])==r[i])){ //if the square is NOT in the same horizontal row as the full row
-                    test.push(p[k]);
+                    if(p[k][1]+pos[1]<r[i]){
+                        test.push([p[k][0], p[k][1]+1]);
+                    } else{
+                        test.push(p[k]);
+                    }
                 } 
-                if(p[k][1]+pos[1]<r[i]){
-                   //pieces[j].piecePos[k] = [pieces[j].piecePos[0], pieces[j].piecePos[1]+1];
-                    console.log('where are u bro');
-                }
             }
             pieces[j].piecePos=test;//trying this out maybe?
             // console.log(pieces[j].piecePos);
@@ -244,12 +275,14 @@ function loop(){
                 rot=0;
                 free=true;
                 speed=400;
+                hold=true;
             }
         } else{
             pieces.unshift(queue.splice(0, 1)[0]);
             queue.push(getRandomPiece());
             rot=0;
             speed=400;
+            hold=true;
         }
 
         var r=getFullRows();
@@ -305,7 +338,23 @@ addEventListener("keydown", (event) => {
             pieces[0].pos = [pieces[0].pos[0], pieces[0].pos[1]+1];
             free=freeY(pieces[0]);
         }
+        speed=1;
     }//quick drop
+    if(event.key=="c"){
+        if(hold){
+            var p = pieces[0];
+            //pieces[0]=heldPiece;
+            if(isEmpty(heldPiece)){
+                pieces.splice(0,1);
+                pieces.unshift(queue.splice(0, 1)[0]);
+                queue.push(getRandomPiece());
+            } else{
+                pieces[0]=heldPiece;
+            }
+            heldPiece=p;
+            hold=false;
+        }
+    }//hold piece
 });
 
 addEventListener("keyup", (event) => {
