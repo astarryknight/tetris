@@ -125,7 +125,8 @@ class Piece {
 }
 
 var game=true;
-var speed=400; //inverse scale - lower number = faster speed
+var gameSpeed=600;
+var speed=gameSpeed; //inverse scale - lower number = faster speed
 
 //piece order: T, J, Z, S, I, L, O
 var pieceList=[[[0,-1], [1,-1], [1,0], [2,-1]], [[0,0], [1,0], [1,-1], [1,-2]], [[0,-1], [1,-1], [1,0], [2,0]], [[0,0], [1,0], [1,-1], [2,-1]], [[0,0], [0,-1], [0,-2], [0,-3]], [[0,0], [1,0], [0,-1], [0,-2]], [[0,0], [1,0], [0,-1], [1,-1]]];  //0,0 at the bottom left corner of the object
@@ -292,14 +293,14 @@ function loop(){
                 queue.push(getRandomPiece());
                 rot=0;
                 free=true;
-                speed=400;
+                speed=gameSpeed;
                 hold=true;
             }
         } else{
             pieces.unshift(queue.splice(0, 1)[0]);
             queue.push(getRandomPiece());
             rot=0;
-            speed=400;
+            speed=gameSpeed;
             hold=true;
         }
 
@@ -379,7 +380,7 @@ addEventListener("keydown", (event) => {
             } else{
                 pieces[0]=heldPiece;
             }
-            heldPiece=p;
+            heldPiece=new Piece([6,2], p.piecePos, p.color, p.id);
             hold=false;
         }
     }//hold piece
@@ -390,7 +391,7 @@ addEventListener("keyup", (event) => {
         return;
     }
     if(event.key=="ArrowDown"){ 
-        speed=400;
+        speed=gameSpeed;
     }
 });
 
