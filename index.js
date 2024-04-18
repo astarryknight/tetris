@@ -78,7 +78,7 @@ class Piece {
 }
 
 var game=true;
-var speed=125; //inverse scale - lower number = faster speed
+var speed=400; //inverse scale - lower number = faster speed
 
 //piece order: T, J, Z, S, I, L, O
 var pieceList=[[[0,-1], [1,-1], [1,0], [2,-1]], [[0,0], [1,0], [1,-1], [1,-2]], [[0,-1], [1,-1], [1,0], [2,0]], [[0,0], [1,0], [1,-1], [2,-1]], [[0,0], [0,-1], [0,-2], [0,-3]], [[0,0], [1,0], [0,-1], [0,-2]], [[0,0], [1,0], [0,-1], [1,-1]]];  //0,0 at the bottom left corner of the object
@@ -177,10 +177,11 @@ function clearRows(r){
             var test=[];
             //console.log(p.length);
             for(k=0;k<p.length;k++){ //iterating through each square in a piece
-                // console.log((p[k][1]+pos[1]));
-                console.log(pieces[j].id, p[k])
                 if(!((p[k][1]+pos[1])==r[i])){ //if the square is NOT in the same horizontal row as the full row
                     test.push(p[k]);
+                } 
+                if(p[k][1]+pos[1]<r[i]){
+                   //pieces[j].piecePos[k] = [pieces[j].piecePos[0], pieces[j].piecePos[1]+1];
                     console.log('where are u bro');
                 }
             }
@@ -190,7 +191,7 @@ function clearRows(r){
             //LOOK AT PEIOCE ROTATUOIBNS DUIFHSD IFUHS DIFUSHD IFUHS DIUFHSD UIFHDFS ROTATION
         }
     }
-    debugger;
+    //debugger;
 }
 
 //main game loop
@@ -215,11 +216,13 @@ function loop(){
                 queue.push(getRandomPiece());
                 rot=0;
                 free=true;
+                speed=400;
             }
         } else{
             pieces.unshift(queue.splice(0, 1)[0]);
             queue.push(getRandomPiece());
             rot=0;
+            speed=400;
         }
 
         var r=getFullRows();
@@ -228,9 +231,9 @@ function loop(){
         }
 
         //console.log(getOccupiedSquares());
-        draw(pieces, queue);
         start=Date.now();
     }
+    draw(pieces, queue);
     window.requestAnimationFrame(loop);
 }
 
@@ -267,6 +270,9 @@ addEventListener("keydown", (event) => {
     }//rotate piece clockwise
     if(event.key=="ArrowDown"){ 
         getFullRows();
+    }//rotate piece clockwise
+    if(event.key==" "){ 
+        speed=1;
     }//rotate piece clockwise
 });
 
