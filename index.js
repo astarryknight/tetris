@@ -83,6 +83,7 @@ function draw(pieces, queue) {
         ctx.font = "20px arial";
         ctx.fillText("Held Piece:", (width+6)*squareHeight, 50);
     }
+    document.getElementById("pps").textContent = "PPS: "+getPPS();
 }
 
 /*https://stackoverflow.com/questions/679915/how-do-i-test-for-an-empty-javascript-object*/
@@ -166,6 +167,7 @@ var hold=true; //can you hold a new piece
 
 
 window.addEventListener("load", draw(pieces, queue));
+var tickStart=Date.now();
 var start=Date.now();
 
 function getOccupiedSquares(){
@@ -277,6 +279,12 @@ function clearRows(r){
         }
     }
     //debugger;
+}
+
+function getPPS(){
+    var now = Date.now();
+    var eTime = (now-tickStart)/1000; //elapsed time in seconds
+    return Math.round((pieces.length/eTime) * 100) / 100; //pieces/sec, rounded to 2 decimal places (https://stackoverflow.com/questions/11832914/how-to-round-to-at-most-2-decimal-places-if-necessary?page=1&tab=scoredesc#tab-top)
 }
 
 //main game loop
