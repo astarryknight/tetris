@@ -1,6 +1,7 @@
 const canvasWidth = 450;
 const canvasHeight = 600;
 const squareHeight = 30;
+var auto=true;
 
 const height = canvasHeight/squareHeight;
 const width = canvasWidth/squareHeight;
@@ -147,6 +148,9 @@ var rot=0;
 var heldPiece;
 var calc=false;
 
+//auto move implementation
+var autoMoves=[];
+
 function getRandomInt(max) {
     return Math.floor(Math.random() * max);
 }
@@ -287,9 +291,35 @@ function getPPS(){
     return Math.round((pieces.length/eTime) * 100) / 100; //pieces/sec, rounded to 2 decimal places (https://stackoverflow.com/questions/11832914/how-to-round-to-at-most-2-decimal-places-if-necessary?page=1&tab=scoredesc#tab-top)
 }
 
-//main game loop
+const move = {
+    moveX: 0,
+    rotation: 0
+}
+
+function getBestMove(){
+    var moveScore=(10*lineHeight);
+    for(i=0;i<width;i++){
+        p = new Piece(); //duplicate piece and test all x values and rotations, assign score and add to array - return highest score
+    }
+    autoMoves=[1,1,2,2,0,0,3,4];
+}
+
+getBestMove();
+
+function autoMove(){
+    if(autoMoves[0]==0){left();}
+    else if(autoMoves[0]==1){right();}
+    else if(autoMoves[0]==2){rotate();}
+    else if(autoMoves[0]==3){quickDrop();}
+    else if(autoMoves[0]==4){holdPiece();}
+    autoMoves.shift();
+}
+
+
+//   main game loop    //
 function loop(){
     var now = Date.now();
+    (auto&&autoMoves.length>0)&&(autoMove());
     if((now-start)>=speed){
         calc=true;
         if(pieces[0].pos[1]<height-1){ //if it is above the floor
@@ -325,72 +355,87 @@ function loop(){
     calc=false;
 }
 
+function left(){
+    if(freeX(pieces[0])[1]){
+        (pieces[0].pos = [pieces[0].pos[0]-1, pieces[0].pos[1]])
+    }
+}
+
+function right(){
+    if(freeX(pieces[0])[0]){
+        (pieces[0].pos = [pieces[0].pos[0]+1, pieces[0].pos[1]])
+    }
+}
+
+function rotate(){
+    var temp=new Piece(pieces[0].pos, pieces[0].piecePos, pieces[0].color, pieces[0].id);
+    rot++;
+    if(rot%4==0){
+        temp.piecePos = pieceList[temp.id];        
+    } else if(rot%4==1){
+        temp.piecePos = firstInv[temp.id];
+    } else if (rot%4==2){
+        temp.piecePos = secondInv[temp.id];
+    } else if (rot%4==3){
+        temp.piecePos = thirdInv[temp.id];
+    }
+    console.log(pieces[0]);
+    console.log(temp);
+    //debugger;
+    if(freeRot(temp)){
+        pieces[0]=new Piece(temp.pos, temp.piecePos, temp.color, temp.id);
+    } else{
+        r--;
+    }
+}
+
+function quickDrop(){
+    free=freeY(pieces[0])
+    while(free&&pieces[0].pos[1]<(height-1)){
+        pieces[0].pos = [pieces[0].pos[0], pieces[0].pos[1]+1];
+        free=freeY(pieces[0]);
+    }
+    speed=1;
+}
+
+function holdPiece(){
+    if(hold){
+        var p = pieces[0];
+        //pieces[0]=heldPiece;
+        if(isEmpty(heldPiece)){
+            pieces.splice(0,1);
+            pieces.unshift(queue.splice(0, 1)[0]);
+            queue.push(getRandomPiece());
+        } else{
+            pieces[0]=heldPiece;
+        }
+        heldPiece=new Piece([6,2], p.piecePos, p.color, p.id);
+        hold=false;
+    }
+}
+
 //handling keypresses
 addEventListener("keydown", (event) => {
-    if (event.isComposing || calc) {
+    if (event.isComposing || calc || auto) {
         return;
     }
-    if(event.key=="ArrowLeft"){ 
-        console.log(freeX(pieces[0]))
-        if(freeX(pieces[0])[1]){
-            (pieces[0].pos = [pieces[0].pos[0]-1, pieces[0].pos[1]])
-        } else{
-            pieces[0].pos;
-        }
+    if(event.key=="ArrowLeft"){
+        left();
      }//turn left
     if(event.key=="ArrowRight"){ 
-        if(freeX(pieces[0])[0]){
-            (pieces[0].pos = [pieces[0].pos[0]+1, pieces[0].pos[1]])
-        } else{
-            pieces[0].pos;
-        }
+        right();
      }//turn right
     if(event.key=="ArrowUp"){
-        var temp=new Piece(pieces[0].pos, pieces[0].piecePos, pieces[0].color, pieces[0].id);
-        rot++;
-        if(rot%4==0){
-            temp.piecePos = pieceList[temp.id];        
-        } else if(rot%4==1){
-            temp.piecePos = firstInv[temp.id];
-        } else if (rot%4==2){
-            temp.piecePos = secondInv[temp.id];
-        } else if (rot%4==3){
-            temp.piecePos = thirdInv[temp.id];
-        }
-        console.log(pieces[0]);
-        console.log(temp);
-        //debugger;
-        if(freeRot(temp)){
-            pieces[0]=new Piece(temp.pos, temp.piecePos, temp.color, temp.id);
-        } else{
-            r--;
-        }
+        rotate();
     }//rotate piece clockwise
     if(event.key=="ArrowDown"){ 
         speed=1;
     }//rotate piece clockwise
     if(event.key==" "){
-        free=freeY(pieces[0])
-        while(free&&pieces[0].pos[1]<(height-1)){
-            pieces[0].pos = [pieces[0].pos[0], pieces[0].pos[1]+1];
-            free=freeY(pieces[0]);
-        }
-        speed=1;
+        quickDrop();
     }//quick drop
     if(event.key=="c"){
-        if(hold){
-            var p = pieces[0];
-            //pieces[0]=heldPiece;
-            if(isEmpty(heldPiece)){
-                pieces.splice(0,1);
-                pieces.unshift(queue.splice(0, 1)[0]);
-                queue.push(getRandomPiece());
-            } else{
-                pieces[0]=heldPiece;
-            }
-            heldPiece=new Piece([6,2], p.piecePos, p.color, p.id);
-            hold=false;
-        }
+        holdPiece();
     }//hold piece
 });
 
