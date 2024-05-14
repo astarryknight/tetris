@@ -321,21 +321,23 @@ function getGameBoard(){
     for(i=0;i<l.length;i++){ //add occupied squares to array
         board[l[i][1]][l[i][0]]=true;
     }
-    console.log(board);
     return board;
 }
 
 function getHoles(){
     var holes=0;
-    //do someting here lol
-    var l=getOccupiedSquares();
-    // for(i=0;i<l[0].length;i++){
-    //     for(j=1;j<l.length;j++){
-    //         if(l[j][i]);
-    //     }
-    // }
-    getGameBoard();
-    debug(holes);
+    var l=getGameBoard(); //get game board as an array
+    for(i=0;i<l[0].length;i++){
+        for(j=0;j<l.length-1;j++){
+            if(l[j][i]==true&&l[j+1][i]==false){
+                var t=j;
+                //while((t<l.length-1)&&l[t+1][i]==false){
+                    holes++;
+                //}
+            }
+        }
+    }
+    console.log(holes);
     return holes;
 }
 
@@ -355,6 +357,11 @@ class Candidate {
         return this.moveScore_;
     }
 }
+
+var c_holes = -7.5;
+var c_height = -1.25;
+var c_clear = 1.75;
+var c_low = 1.25;
 
 function getBestMove(){
     var candidates=[];
@@ -377,7 +384,7 @@ function getBestMove(){
             //console.log(temp.pos[0], temp.pos[1], r);
             //check conditions here and push to move candidate array
             getHoles();
-            var ms=temp.pos[1]; //calculate candidate overall score
+            var ms=(c_low*temp.pos[1])+(c_holes*getHoles()); //calculate candidate overall score
             candidates.push(new Candidate(temp.pos[0], r, ms));
             rotate();
             r++;
