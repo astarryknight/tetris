@@ -1,3 +1,15 @@
+//NO CONSOLE>GLIJDGLSIDJFLDSJF
+function debug(text){
+    document.getElementById("debug").textContent=text;
+}
+
+window.onerror = function(e, url, line){
+    debug('onerror: ' + e + ' URL:' + url + ' Line:' + line);
+    return true;
+}
+
+
+
 const canvasWidth = 450;
 const canvasHeight = 600;
 const squareHeight = 30;
@@ -160,7 +172,7 @@ function getRandomPiece(){
     if(pieces.length>1&&n==pieces[1].id){
         n++;
     }
-    return new Piece([6,2], pieceList[n], colors[n], n);
+    return new Piece([0,2], pieceList[n], colors[n], n);
 }
 
 pieces.push(getRandomPiece());
@@ -291,20 +303,64 @@ function getPPS(){
     return Math.round((pieces.length/eTime) * 100) / 100; //pieces/sec, rounded to 2 decimal places (https://stackoverflow.com/questions/11832914/how-to-round-to-at-most-2-decimal-places-if-necessary?page=1&tab=scoredesc#tab-top)
 }
 
-const move = {
-    moveX: 0,
-    rotation: 0
+function getHoles(){
+    //do someting here lol
+}
+
+class Candidate {
+    constructor(moveX, rotation, moveScore) {
+        this.moveX_ = moveX;
+        this.rotation_ = rotation;
+        this.moveScore_ = moveScore;
+    }
+    get moveX(){
+        return this.moveX_;
+    }
+    get rotation(){
+        return this.rotation_;
+    }
+    get moveScore(){
+        return this.moveScore_;
+    }
 }
 
 function getBestMove(){
-    var moveScore=(10*lineHeight);
-    for(i=0;i<width;i++){
-        p = new Piece(); //duplicate piece and test all x values and rotations, assign score and add to array - return highest score
+    //var moveScore=(10*lineHeight);
+    var candidates=[];
+    var test=[];
+    var x=0; //get minimum value for piece, if not 0,0 (I don't think this is necessary)
+    var y=pieces[0].pos[1];
+    var temp = new Piece([x,y], pieces[0].piecePos, "#B4B3B3", pieces[0].id);
+    //duplicate piece and test all x values and rotations at lowest point, assign score and add to array - return highest score
+    while(x<width){
+        var r=0;
+        while(r<4){
+            var y=pieces[0].pos[1];
+            var free=true;
+            while(free&&temp.pos[1]<(height-1)){
+                temp.pos = [temp.pos[0], temp.pos[1]+1];
+                free=freeY(temp);
+            }
+            candidates.push(new Candidate(temp.pos[0], r, temp.pos[1]));
+            r++;
+        }
+        temp.pos=[temp.pos[0]+1, temp.pos[1]];
+        x=temp.pos[0];
+        test.push(temp.pos[0]);
     }
-    autoMoves=[1,1,2,2,0,0,3,4];
+    var highestCandidate=candidates[0];
+    debug(candidates.length)
+    for(i=1;i<candidates.length;i++){
+        //get best candidate
+        (candidates[i].moveScore>highestCandidate.moveScore)&&(highestCandidate=candidates[i]);
+    }
+    // debug(test);
+    for(i=0;i<highestCandidate.moveX;i++){ autoMoves.push(1); }
+    for(i=0;i<highestCandidate.rotation;i++){ autoMoves.push(2); }
+    autoMoves.push(3);
+    debugger;
+    //generate moves array for autoMove()
 }
-
-getBestMove();
 
 function autoMove(){
     if(autoMoves[0]==0){left();}
@@ -315,6 +371,8 @@ function autoMove(){
     autoMoves.shift();
 }
 
+//INIT
+getBestMove();
 
 //   main game loop    //
 function loop(){
@@ -333,6 +391,7 @@ function loop(){
                 free=true;
                 speed=gameSpeed;
                 hold=true;
+                (auto)&&getBestMove();
             }
         } else{
             pieces.unshift(queue.splice(0, 1)[0]);
@@ -340,6 +399,7 @@ function loop(){
             rot=0;
             speed=gameSpeed;
             hold=true;
+            (auto)&&getBestMove();
         }
 
         var r=getFullRows();
@@ -409,7 +469,7 @@ function holdPiece(){
         } else{
             pieces[0]=heldPiece;
         }
-        heldPiece=new Piece([6,2], p.piecePos, p.color, p.id);
+        heldPiece=new Piece([0,2], p.piecePos, p.color, p.id);
         hold=false;
     }
 }
