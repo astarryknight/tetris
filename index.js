@@ -278,7 +278,6 @@ function clearRows(r){
             var pos=pieces[j].pos; //array for position of each piece
             var test=[];
             var moveDown=[];
-            //console.log(p.length);
             for(k=0;k<p.length;k++){ //iterating through each square in a piece
                 if(!((p[k][1]+pos[1])==r[i])){ //if the square is NOT in the same horizontal row as the full row
                     if(p[k][1]+pos[1]<r[i]){
@@ -288,8 +287,7 @@ function clearRows(r){
                     }
                 } 
             }
-            pieces[j].piecePos=test;//trying this out maybe?
-            // console.log(pieces[j].piecePos);
+            pieces[j].piecePos=test;
 
             //LOOK AT PEIOCE ROTATUOIBNS DUIFHSD IFUHS DIFUSHD IFUHS DIUFHSD UIFHDFS ROTATION
         }
@@ -303,8 +301,42 @@ function getPPS(){
     return Math.round((pieces.length/eTime) * 100) / 100; //pieces/sec, rounded to 2 decimal places (https://stackoverflow.com/questions/11832914/how-to-round-to-at-most-2-decimal-places-if-necessary?page=1&tab=scoredesc#tab-top)
 }
 
+function includesArray(main, compare){
+    for(i=0;i<main.length;i++){
+        if(main[i][0]==compare[0] && main[i][1]==compare[1]){return true;}
+    }
+    return false;
+}
+
+function getGameBoard(){
+    var l=getOccupiedSquares();
+    var board=[];
+    for(i=0;i<height;i++){ //populate array with default values
+        var temp=[]
+        for(j=0;j<width;j++){
+            temp.push(false);
+        }
+        board.push(temp);
+    }
+    for(i=0;i<l.length;i++){ //add occupied squares to array
+        board[l[i][1]][l[i][0]]=true;
+    }
+    console.log(board);
+    return board;
+}
+
 function getHoles(){
+    var holes=0;
     //do someting here lol
+    var l=getOccupiedSquares();
+    // for(i=0;i<l[0].length;i++){
+    //     for(j=1;j<l.length;j++){
+    //         if(l[j][i]);
+    //     }
+    // }
+    getGameBoard();
+    debug(holes);
+    return holes;
 }
 
 class Candidate {
@@ -325,7 +357,6 @@ class Candidate {
 }
 
 function getBestMove(){
-    //var moveScore=(10*lineHeight);
     var candidates=[];
     var test=[];
     var x=0; //get minimum value for piece, if not 0,0 (I don't think this is necessary)
@@ -335,26 +366,35 @@ function getBestMove(){
     while(x<width){
         var r=0;
         while(r<4){
-            var y=pieces[0].pos[1];
+            y=pieces[0].pos[1];
+            temp = new Piece([x,y], pieces[0].piecePos, "#B4B3B3", pieces[0].id);
             var free=true;
             while(free&&temp.pos[1]<(height-1)){
                 temp.pos = [temp.pos[0], temp.pos[1]+1];
+                //console.log(temp.pos);
                 free=freeY(temp);
             }
-            candidates.push(new Candidate(temp.pos[0], r, temp.pos[1]));
+            //console.log(temp.pos[0], temp.pos[1], r);
+            //check conditions here and push to move candidate array
+            getHoles();
+            var ms=temp.pos[1]; //calculate candidate overall score
+            candidates.push(new Candidate(temp.pos[0], r, ms));
+            rotate();
             r++;
         }
         temp.pos=[temp.pos[0]+1, temp.pos[1]];
         x=temp.pos[0];
-        test.push(temp.pos[0]);
     }
+    debugger;
     var highestCandidate=candidates[0];
-    debug(candidates.length)
     for(i=1;i<candidates.length;i++){
         //get best candidate
-        (candidates[i].moveScore>highestCandidate.moveScore)&&(highestCandidate=candidates[i]);
+        (candidates[i].moveScore>highestCandidate.moveScore)&&(highestCandidate=candidates[i]);debug(i);;
+        test.push(highestCandidate.moveScore);
     }
-    // debug(test);
+    //debug(highestCandidate.moveScore);
+    //debug(highestCandidate.moveX);
+    //debug(highestCandidate.moveScore);
     for(i=0;i<highestCandidate.moveX;i++){ autoMoves.push(1); }
     for(i=0;i<highestCandidate.rotation;i++){ autoMoves.push(2); }
     autoMoves.push(3);
@@ -373,11 +413,14 @@ function autoMove(){
 
 //INIT
 getBestMove();
+var autoSpeed=250;
 
 //   main game loop    //
 function loop(){
     var now = Date.now();
-    (auto&&autoMoves.length>0)&&(autoMove());
+    if((now-start)>=autoSpeed){
+        (auto&&autoMoves.length>0)&&(autoMove());
+    }
     if((now-start)>=speed){
         calc=true;
         if(pieces[0].pos[1]<height-1){ //if it is above the floor
@@ -439,8 +482,6 @@ function rotate(){
     } else if (rot%4==3){
         temp.piecePos = thirdInv[temp.id];
     }
-    console.log(pieces[0]);
-    console.log(temp);
     //debugger;
     if(freeRot(temp)){
         pieces[0]=new Piece(temp.pos, temp.piecePos, temp.color, temp.id);
