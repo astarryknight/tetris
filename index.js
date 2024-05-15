@@ -324,6 +324,33 @@ function getGameBoard(){
     return board;
 }
 
+function getColumnHeight(x){
+    var l=getGameBoard();
+    for(i=0;i<l.length;i++){
+        if(l[i][x]==true){
+            return (height-i)
+        }
+    }
+    return 0;
+}
+
+function getAggregateHeight(){
+    var l=getGameBoard();
+    var aHeight=0;
+    for(i=0;i<l[0].length;i++){
+        aHeight+=getColumnHeight(i);
+    }
+    return aHeight;
+}
+
+function getCompleteLines(){
+    return getFullRows().length;
+}
+
+function getBumpiness(){
+
+}
+
 function getHoles(){
     var holes=0;
     var l=getGameBoard(); //get game board as an array
@@ -337,7 +364,6 @@ function getHoles(){
             }
         }
     }
-    console.log(holes);
     return holes;
 }
 
@@ -358,10 +384,10 @@ class Candidate {
     }
 }
 
-var c_holes = -7.5;
-var c_height = -1.25;
-var c_clear = 1.75;
-var c_low = 1.25;
+var c_holes = -0.356;
+var c_height = -0.51;
+var c_clear = 0.76;
+var c_low = 0.25;
 
 function getBestMove(){
     var candidates=[];
@@ -370,7 +396,7 @@ function getBestMove(){
     var y=pieces[0].pos[1];
     var temp = new Piece([x,y], pieces[0].piecePos, "#B4B3B3", pieces[0].id);
     //duplicate piece and test all x values and rotations at lowest point, assign score and add to array - return highest score
-    while(x<width){
+    while(x<width-1){ //wow much bug (not lol)
         var r=0;
         while(r<4){
             y=pieces[0].pos[1];
@@ -378,13 +404,12 @@ function getBestMove(){
             var free=true;
             while(free&&temp.pos[1]<(height-1)){
                 temp.pos = [temp.pos[0], temp.pos[1]+1];
-                //console.log(temp.pos);
                 free=freeY(temp);
             }
-            //console.log(temp.pos[0], temp.pos[1], r);
             //check conditions here and push to move candidate array
-            getHoles();
-            var ms=(c_low*temp.pos[1])+(c_holes*getHoles()); //calculate candidate overall score
+            //var ms=((c_holes*getHoles())+(c_height*getAggregateHeight())+(c_clear*getCompleteLines())+(c_low*temp.pos[1])); //calculate candidate overall score
+            var ms=temp.pos[1]; //most likely errors around here (ms), make sure to check b/c thats what it seems like
+            console.log(ms);
             candidates.push(new Candidate(temp.pos[0], r, ms));
             rotate();
             r++;
@@ -392,20 +417,14 @@ function getBestMove(){
         temp.pos=[temp.pos[0]+1, temp.pos[1]];
         x=temp.pos[0];
     }
-    debugger;
     var highestCandidate=candidates[0];
     for(i=1;i<candidates.length;i++){
         //get best candidate
-        (candidates[i].moveScore>highestCandidate.moveScore)&&(highestCandidate=candidates[i]);debug(i);;
-        test.push(highestCandidate.moveScore);
+        (candidates[i].moveScore>highestCandidate.moveScore)&&(highestCandidate=candidates[i]);
     }
-    //debug(highestCandidate.moveScore);
-    //debug(highestCandidate.moveX);
-    //debug(highestCandidate.moveScore);
     for(i=0;i<highestCandidate.moveX;i++){ autoMoves.push(1); }
     for(i=0;i<highestCandidate.rotation;i++){ autoMoves.push(2); }
     autoMoves.push(3);
-    debugger;
     //generate moves array for autoMove()
 }
 
@@ -425,44 +444,46 @@ var autoSpeed=250;
 //   main game loop    //
 function loop(){
     var now = Date.now();
-    if((now-start)>=autoSpeed){
-        (auto&&autoMoves.length>0)&&(autoMove());
-    }
-    if((now-start)>=speed){
-        calc=true;
-        if(pieces[0].pos[1]<height-1){ //if it is above the floor
-            free=freeY(pieces[0]);
-            if(free){ //if it is above all other pieces
-                pieces[0].pos = [pieces[0].pos[0], pieces[0].pos[1]+1];
-            } else{ //fix this PLEAZESRSEROSEIJFOSEIJFOISEJFOSIEJFOISEJFIO
+    if(freeY(pieces[0])&&pieces[0].pos[1]>=2){
+        if((now-start)>=autoSpeed){
+            (auto&&autoMoves.length>0)&&(autoMove());
+        }
+        if((now-start)>=speed){
+            calc=true;
+            if(pieces[0].pos[1]<height-1){ //if it is above the floor
+                free=freeY(pieces[0]);
+                if(free){ //if it is above all other pieces
+                    pieces[0].pos = [pieces[0].pos[0], pieces[0].pos[1]+1];
+                } else{ //fix this PLEAZESRSEROSEIJFOSEIJFOISEJFOSIEJFOISEJFIO
+                    pieces.unshift(queue.splice(0, 1)[0]);
+                    queue.push(getRandomPiece());
+                    rot=0;
+                    free=true;
+                    speed=gameSpeed;
+                    hold=true;
+                    (auto)&&getBestMove();
+                }
+            } else{
                 pieces.unshift(queue.splice(0, 1)[0]);
                 queue.push(getRandomPiece());
                 rot=0;
-                free=true;
                 speed=gameSpeed;
                 hold=true;
                 (auto)&&getBestMove();
             }
-        } else{
-            pieces.unshift(queue.splice(0, 1)[0]);
-            queue.push(getRandomPiece());
-            rot=0;
-            speed=gameSpeed;
-            hold=true;
-            (auto)&&getBestMove();
-        }
 
-        var r=getFullRows();
-        if(r.length>0){ //if number of full rows is > 1 (at least one row is full)
-            clearRows(r);
-        }
+            var r=getFullRows();
+            if(r.length>0){ //if number of full rows is > 1 (at least one row is full)
+                clearRows(r);
+            }
 
-        //console.log(getOccupiedSquares());
-        start=Date.now();
+            //console.log(getOccupiedSquares());
+            start=Date.now();
+        }
+        draw(pieces, queue);
+        window.requestAnimationFrame(loop);
+        calc=false;
     }
-    draw(pieces, queue);
-    window.requestAnimationFrame(loop);
-    calc=false;
 }
 
 function left(){
