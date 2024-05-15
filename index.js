@@ -1,19 +1,6 @@
-//NO CONSOLE>GLIJDGLSIDJFLDSJF
-function debug(text){
-    document.getElementById("debug").textContent=text;
-}
-
-window.onerror = function(e, url, line){
-    debug('onerror: ' + e + ' URL:' + url + ' Line:' + line);
-    return true;
-}
-
-
-
 const canvasWidth = 450;
 const canvasHeight = 600;
 const squareHeight = 30;
-var auto=true;
 
 const height = canvasHeight/squareHeight;
 const width = canvasWidth/squareHeight;
@@ -160,9 +147,6 @@ var rot=0;
 var heldPiece;
 var calc=false;
 
-//auto move implementation
-var autoMoves=[];
-
 function getRandomInt(max) {
     return Math.floor(Math.random() * max);
 }
@@ -172,7 +156,7 @@ function getRandomPiece(){
     if(pieces.length>1&&n==pieces[1].id){
         n++;
     }
-    return new Piece([0,2], pieceList[n], colors[n], n);
+    return new Piece([6,2], pieceList[n], colors[n], n);
 }
 
 pieces.push(getRandomPiece());
@@ -255,7 +239,8 @@ function freeRot(rotPiece){
     return free;
 }
 
-function getFullRows(l){
+function getFullRows(){
+    var l=getOccupiedSquares();
     var totals=[];
     var rows=[];
     for(i=0;i<height;i++){totals.push(0);}
@@ -277,6 +262,7 @@ function clearRows(r){
             var pos=pieces[j].pos; //array for position of each piece
             var test=[];
             var moveDown=[];
+            //console.log(p.length);
             for(k=0;k<p.length;k++){ //iterating through each square in a piece
                 if(!((p[k][1]+pos[1])==r[i])){ //if the square is NOT in the same horizontal row as the full row
                     if(p[k][1]+pos[1]<r[i]){
@@ -286,7 +272,8 @@ function clearRows(r){
                     }
                 } 
             }
-            pieces[j].piecePos=test;
+            pieces[j].piecePos=test;//trying this out maybe?
+            // console.log(pieces[j].piecePos);
 
             //LOOK AT PEIOCE ROTATUOIBNS DUIFHSD IFUHS DIFUSHD IFUHS DIUFHSD UIFHDFS ROTATION
         }
@@ -300,319 +287,110 @@ function getPPS(){
     return Math.round((pieces.length/eTime) * 100) / 100; //pieces/sec, rounded to 2 decimal places (https://stackoverflow.com/questions/11832914/how-to-round-to-at-most-2-decimal-places-if-necessary?page=1&tab=scoredesc#tab-top)
 }
 
-function getTempOccupiedSquares(piece){
-    var l=getOccupiedSquares();
-    p = piece.piecePos;
-    pos = piece.pos;
-    for(j=0;j<p.length;j++){
-        l.push([p[j][0]+pos[0], p[j][1]+pos[1]]);
-    }
-    return l;
-}
-
-function includesArray(main, compare){
-    for(i=0;i<main.length;i++){
-        if(main[i][0]==compare[0] && main[i][1]==compare[1]){return true;}
-    }
-    return false;
-}
-
-function getGameBoard(l){
-    var board=[];
-    for(i=0;i<height;i++){ //populate array with default values
-        var temp=[]
-        for(j=0;j<width;j++){
-            temp.push(false);
-        }
-        board.push(temp);
-    }
-    for(i=0;i<l.length;i++){ //add occupied squares to array
-        board[l[i][1]][l[i][0]]=true;
-    }
-    return board;
-}
-
-function getColumnHeight(x, gb){
-    var l=gb;
-    for(i=0;i<l.length;i++){
-        if(l[i][x]==true){
-            return (height-i)
-        }
-    }
-    return 0;
-}
-
-/*function getAggregateHeight(temp){    WHAT THE SIGMA (FOR LOOP????)
-    var aHeight=0;
-    var test=[]
-    var l=getGameBoard(temp);
-    for(j=0;j<width;j++){
-        t=getColumnHeight(j, temp);
-        test.push(j);
-        aHeight=aHeight+t;
-    }
-    debug(test);
-    return aHeight;
-}*/
-
-function getAggregateHeight(gb){
-    var x=0;
-    var t=0;
-    while(x<(width-1)){
-        t+=getColumnHeight(x,gb);
-        x++;
-    }
-    return t;
-}
-
-function getCompleteLines(gb){
-    return getFullRows(gb).length;
-}
-
-function getBumpiness(gb){
-    var bumpiness=0;
-    var test=[];
-    var l=gb;
-    // for(i=1;i<l[0].length;i++){
-    //     bumpiness+=(Math.abs(getColumnHeight(i,l)-getColumnHeight(i-1,l)));
-    // }
-    var x=1;
-    while(x<(width-1)){
-        bumpiness+=(Math.abs(getColumnHeight(x,l)-getColumnHeight(x-1,l)));
-        test.push(0);
-        x++;
-    }
-    return bumpiness;
-    //return bumpiness;
-}
-
-function getHoles(gb){
-    var holes=0;
-    var l=gb;
-    for(i=0;i<l[0].length;i++){
-        for(j=0;j<l.length-1;j++){
-            if(l[j][i]==true&&l[j+1][i]==false){
-                var t=j;
-                //while((t<l.length-1)&&l[t+1][i]==false){
-                    holes++;
-                //}
-            }
-        }
-    }
-    return holes;
-}
-
-class Candidate {
-    constructor(moveX, rotation, moveScore) {
-        this.moveX_ = moveX;
-        this.rotation_ = rotation;
-        this.moveScore_ = moveScore;
-    }
-    get moveX(){
-        return this.moveX_;
-    }
-    get rotation(){
-        return this.rotation_;
-    }
-    get moveScore(){
-        return this.moveScore_;
-    }
-}
-
-var c_holes = -1.76;
-var c_height = -0.51;
-var c_clear = 1.06;
-var c_low = 0.25;
-var c_bump = -0.184;
-
-function getBestMove(){
-    var candidates=[];
-    var test=[];
-    var x=0; //get minimum value for piece, if not 0,0 (I don't think this is necessary)
-    var y=pieces[0].pos[1];
-    var temp = new Piece([x,y], pieces[0].piecePos, "#B4B3B3", pieces[0].id);
-    //duplicate piece and test all x values and rotations at lowest point, assign score and add to array - return highest score
-    while((temp.id==4||temp.id==6)?(x<width):(x<width-1)){ //wow much bug (not lol)
-        var r=0;
-        while(r<4){
-            y=pieces[0].pos[1];
-            temp = new Piece([x,y], pieces[0].piecePos, "#B4B3B3", pieces[0].id);
-            var free=true;
-            while(free&&temp.pos[1]<(height-1)){
-                temp.pos = [temp.pos[0], temp.pos[1]+1];
-                free=freeY(temp);
-            }
-            //check conditions here and push to move candidate array
-            //var ms=((c_holes*getHoles())+(c_height*getAggregateHeight())+(c_clear*getCompleteLines())+(c_low*temp.pos[1])); //calculate candidate overall score
-            var l=getTempOccupiedSquares(temp);
-            var gb=getGameBoard(l);
-            //var ms=((getHoles(l))*c_holes)+(c_low*temp.pos[1])+(c_clear*getCompleteLines(l));
-            var ms=((getHoles(gb)*c_holes)+(c_clear*getCompleteLines(gb))+/*(c_height*getAggregateHeight(gb))*/+(c_low*temp.pos[1])+(c_bump*getBumpiness(gb)));
-
-            //AGGREGATE HEIGHT LAST 2 LINES NOT REALLY WORKING SDFISJFOJSEFIJDOSFJODSIJFOISDJFIO
-
-            //test.push(getAggregateHeight(l));
-            debug(ms);
-            //debug(getAggregateHeight(l));
-            //console.log((getAggregateHeight(l)));
-            debugger;
-            //most likely errors around here (ms), make sure to check b/c thats what it seems like
-            //console.log(ms);
-            candidates.push(new Candidate(temp.pos[0], r, ms));
-            rotate();
-            r++;
-        }
-        temp.pos=[temp.pos[0]+1, temp.pos[1]];
-        x=temp.pos[0];
-    }
-    var highestCandidate=candidates[0];
-    for(i=1;i<candidates.length;i++){
-        //get best candidate
-        (candidates[i].moveScore>highestCandidate.moveScore)&&(highestCandidate=candidates[i]);
-    }
-    for(i=0;i<highestCandidate.moveX;i++){ autoMoves.push(1); }
-    for(i=0;i<highestCandidate.rotation;i++){ autoMoves.push(2); }
-    autoMoves.push(3);
-    //generate moves array for autoMove()
-}
-
-function autoMove(){
-    if(autoMoves[0]==0){left();}
-    else if(autoMoves[0]==1){right();}
-    else if(autoMoves[0]==2){rotate();}
-    else if(autoMoves[0]==3){quickDrop();}
-    else if(autoMoves[0]==4){holdPiece();}
-    autoMoves.shift();
-}
-
-//INIT
-getBestMove();
-var autoSpeed=100;
-
-//   main game loop    //
+//main game loop
 function loop(){
     var now = Date.now();
-    if(freeY(pieces[0])&&pieces[0].pos[1]>=2){
-        if((now-start)>=autoSpeed){
-            (auto&&autoMoves.length>0)&&(autoMove());
-        }
-        if((now-start)>=speed){
-            calc=true;
-            if(pieces[0].pos[1]<height-1){ //if it is above the floor
-                free=freeY(pieces[0]);
-                if(free){ //if it is above all other pieces
-                    pieces[0].pos = [pieces[0].pos[0], pieces[0].pos[1]+1];
-                } else{ //fix this PLEAZESRSEROSEIJFOSEIJFOISEJFOSIEJFOISEJFIO
-                    pieces.unshift(queue.splice(0, 1)[0]);
-                    queue.push(getRandomPiece());
-                    rot=0;
-                    free=true;
-                    speed=gameSpeed;
-                    hold=true;
-                    (auto)&&getBestMove();
-                }
-            } else{
+    if((now-start)>=speed){
+        calc=true;
+        if(pieces[0].pos[1]<height-1){ //if it is above the floor
+            free=freeY(pieces[0]);
+            if(free){ //if it is above all other pieces
+                pieces[0].pos = [pieces[0].pos[0], pieces[0].pos[1]+1];
+            } else{ //fix this PLEAZESRSEROSEIJFOSEIJFOISEJFOSIEJFOISEJFIO
                 pieces.unshift(queue.splice(0, 1)[0]);
                 queue.push(getRandomPiece());
                 rot=0;
+                free=true;
                 speed=gameSpeed;
                 hold=true;
-                (auto)&&getBestMove();
             }
-
-            var r=getFullRows(getOccupiedSquares());
-            if(r.length>0){ //if number of full rows is > 1 (at least one row is full)
-                clearRows(r);
-            }
-
-            //console.log(getOccupiedSquares());
-            start=Date.now();
-        }
-        draw(pieces, queue);
-        window.requestAnimationFrame(loop);
-        calc=false;
-    }
-}
-
-function left(){
-    if(freeX(pieces[0])[1]){
-        (pieces[0].pos = [pieces[0].pos[0]-1, pieces[0].pos[1]])
-    }
-}
-
-function right(){
-    if(freeX(pieces[0])[0]){
-        (pieces[0].pos = [pieces[0].pos[0]+1, pieces[0].pos[1]])
-    }
-}
-
-function rotate(){
-    var temp=new Piece(pieces[0].pos, pieces[0].piecePos, pieces[0].color, pieces[0].id);
-    rot++;
-    if(rot%4==0){
-        temp.piecePos = pieceList[temp.id];        
-    } else if(rot%4==1){
-        temp.piecePos = firstInv[temp.id];
-    } else if (rot%4==2){
-        temp.piecePos = secondInv[temp.id];
-    } else if (rot%4==3){
-        temp.piecePos = thirdInv[temp.id];
-    }
-    //debugger;
-    if(freeRot(temp)){
-        pieces[0]=new Piece(temp.pos, temp.piecePos, temp.color, temp.id);
-    } else{
-        r--;
-    }
-}
-
-function quickDrop(){
-    free=freeY(pieces[0])
-    while(free&&pieces[0].pos[1]<(height-1)){
-        pieces[0].pos = [pieces[0].pos[0], pieces[0].pos[1]+1];
-        free=freeY(pieces[0]);
-    }
-    speed=1;
-}
-
-function holdPiece(){
-    if(hold){
-        var p = pieces[0];
-        //pieces[0]=heldPiece;
-        if(isEmpty(heldPiece)){
-            pieces.splice(0,1);
+        } else{
             pieces.unshift(queue.splice(0, 1)[0]);
             queue.push(getRandomPiece());
-        } else{
-            pieces[0]=heldPiece;
+            rot=0;
+            speed=gameSpeed;
+            hold=true;
         }
-        heldPiece=new Piece([0,2], p.piecePos, p.color, p.id);
-        hold=false;
+
+        var r=getFullRows();
+        if(r.length>0){ //if number of full rows is > 1 (at least one row is full)
+            clearRows(r);
+        }
+
+        //console.log(getOccupiedSquares());
+        start=Date.now();
     }
+    draw(pieces, queue);
+    window.requestAnimationFrame(loop);
+    calc=false;
 }
 
 //handling keypresses
 addEventListener("keydown", (event) => {
-    if (event.isComposing || calc || auto) {
+    if (event.isComposing || calc) {
         return;
     }
-    if(event.key=="ArrowLeft"){
-        left();
+    if(event.key=="ArrowLeft"){ 
+        console.log(freeX(pieces[0]))
+        if(freeX(pieces[0])[1]){
+            (pieces[0].pos = [pieces[0].pos[0]-1, pieces[0].pos[1]])
+        } else{
+            pieces[0].pos;
+        }
      }//turn left
     if(event.key=="ArrowRight"){ 
-        right();
+        if(freeX(pieces[0])[0]){
+            (pieces[0].pos = [pieces[0].pos[0]+1, pieces[0].pos[1]])
+        } else{
+            pieces[0].pos;
+        }
      }//turn right
     if(event.key=="ArrowUp"){
-        rotate();
+        var temp=new Piece(pieces[0].pos, pieces[0].piecePos, pieces[0].color, pieces[0].id);
+        rot++;
+        if(rot%4==0){
+            temp.piecePos = pieceList[temp.id];        
+        } else if(rot%4==1){
+            temp.piecePos = firstInv[temp.id];
+        } else if (rot%4==2){
+            temp.piecePos = secondInv[temp.id];
+        } else if (rot%4==3){
+            temp.piecePos = thirdInv[temp.id];
+        }
+        console.log(pieces[0]);
+        console.log(temp);
+        //debugger;
+        if(freeRot(temp)){
+            pieces[0]=new Piece(temp.pos, temp.piecePos, temp.color, temp.id);
+        } else{
+            r--;
+        }
     }//rotate piece clockwise
     if(event.key=="ArrowDown"){ 
         speed=1;
     }//rotate piece clockwise
     if(event.key==" "){
-        quickDrop();
+        free=freeY(pieces[0])
+        while(free&&pieces[0].pos[1]<(height-1)){
+            pieces[0].pos = [pieces[0].pos[0], pieces[0].pos[1]+1];
+            free=freeY(pieces[0]);
+        }
+        speed=1;
     }//quick drop
     if(event.key=="c"){
-        holdPiece();
+        if(hold){
+            var p = pieces[0];
+            //pieces[0]=heldPiece;
+            if(isEmpty(heldPiece)){
+                pieces.splice(0,1);
+                pieces.unshift(queue.splice(0, 1)[0]);
+                queue.push(getRandomPiece());
+            } else{
+                pieces[0]=heldPiece;
+            }
+            heldPiece=new Piece([6,2], p.piecePos, p.color, p.id);
+            hold=false;
+        }
     }//hold piece
 });
 
