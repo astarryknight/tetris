@@ -255,8 +255,7 @@ function freeRot(rotPiece){
     return free;
 }
 
-function getFullRows(){
-    var l=getOccupiedSquares();
+function getFullRows(l){
     var totals=[];
     var rows=[];
     for(i=0;i<height;i++){totals.push(0);}
@@ -301,6 +300,16 @@ function getPPS(){
     return Math.round((pieces.length/eTime) * 100) / 100; //pieces/sec, rounded to 2 decimal places (https://stackoverflow.com/questions/11832914/how-to-round-to-at-most-2-decimal-places-if-necessary?page=1&tab=scoredesc#tab-top)
 }
 
+function getTempOccupiedSquares(piece){
+    var l=getOccupiedSquares();
+    p = piece.piecePos;
+    pos = piece.pos;
+    for(j=0;j<p.length;j++){
+        l.push([p[j][0]+pos[0], p[j][1]+pos[1]]);
+    }
+    return l;
+}
+
 function includesArray(main, compare){
     for(i=0;i<main.length;i++){
         if(main[i][0]==compare[0] && main[i][1]==compare[1]){return true;}
@@ -308,8 +317,7 @@ function includesArray(main, compare){
     return false;
 }
 
-function getGameBoard(){
-    var l=getOccupiedSquares();
+function getGameBoard(l){
     var board=[];
     for(i=0;i<height;i++){ //populate array with default values
         var temp=[]
@@ -324,8 +332,8 @@ function getGameBoard(){
     return board;
 }
 
-function getColumnHeight(x){
-    var l=getGameBoard();
+function getColumnHeight(x, temp){
+    var l=getGameBoard(temp);
     for(i=0;i<l.length;i++){
         if(l[i][x]==true){
             return (height-i)
@@ -334,26 +342,32 @@ function getColumnHeight(x){
     return 0;
 }
 
-function getAggregateHeight(){
-    var l=getGameBoard();
+function getAggregateHeight(temp){
     var aHeight=0;
+    var l=getGameBoard(temp);
     for(i=0;i<l[0].length;i++){
-        aHeight+=getColumnHeight(i);
+        aHeight+=getColumnHeight(i, temp);
+        console.log("x: ", i, "height", getColumnHeight(i, temp));
     }
     return aHeight;
 }
 
-function getCompleteLines(){
-    return getFullRows().length;
+function getCompleteLines(l){
+    return getFullRows(l).length;
 }
 
-function getBumpiness(){
-
+function getBumpiness(temp){
+    var l=getGameBoard(temp);
+    var bumpiness=0;
+    for(i=1;i<l[0].length;i++){
+        bumpiness+=(Math.abs(getColumnHeight(i,l)-getColumnHeight(i-1,l)));
+    }
+    return bumpiness
 }
 
-function getHoles(){
+function getHoles(temp){
     var holes=0;
-    var l=getGameBoard(); //get game board as an array
+    var l=getGameBoard(temp);
     for(i=0;i<l[0].length;i++){
         for(j=0;j<l.length-1;j++){
             if(l[j][i]==true&&l[j+1][i]==false){
@@ -408,8 +422,13 @@ function getBestMove(){
             }
             //check conditions here and push to move candidate array
             //var ms=((c_holes*getHoles())+(c_height*getAggregateHeight())+(c_clear*getCompleteLines())+(c_low*temp.pos[1])); //calculate candidate overall score
-            var ms=temp.pos[1]; //most likely errors around here (ms), make sure to check b/c thats what it seems like
-            console.log(ms);
+            var l=getTempOccupiedSquares(temp);
+            var ms=(-getHoles(l)*c_holes);
+            getAggregateHeight(l);
+            //console.log((getAggregateHeight(l)));
+            debugger;
+            //most likely errors around here (ms), make sure to check b/c thats what it seems like
+            //console.log(ms);
             candidates.push(new Candidate(temp.pos[0], r, ms));
             rotate();
             r++;
@@ -472,7 +491,7 @@ function loop(){
                 (auto)&&getBestMove();
             }
 
-            var r=getFullRows();
+            var r=getFullRows(getOccupiedSquares());
             if(r.length>0){ //if number of full rows is > 1 (at least one row is full)
                 clearRows(r);
             }
