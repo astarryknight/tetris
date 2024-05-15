@@ -332,8 +332,8 @@ function getGameBoard(l){
     return board;
 }
 
-function getColumnHeight(x, temp){
-    var l=getGameBoard(temp);
+function getColumnHeight(x, gb){
+    var l=gb;
     for(i=0;i<l.length;i++){
         if(l[i][x]==true){
             return (height-i)
@@ -342,32 +342,53 @@ function getColumnHeight(x, temp){
     return 0;
 }
 
-function getAggregateHeight(temp){
+/*function getAggregateHeight(temp){    WHAT THE SIGMA (FOR LOOP????)
     var aHeight=0;
+    var test=[]
     var l=getGameBoard(temp);
-    for(i=0;i<l[0].length;i++){
-        aHeight+=getColumnHeight(i, temp);
-        console.log("x: ", i, "height", getColumnHeight(i, temp));
+    for(j=0;j<width;j++){
+        t=getColumnHeight(j, temp);
+        test.push(j);
+        aHeight=aHeight+t;
     }
+    debug(test);
     return aHeight;
-}
+}*/
 
-function getCompleteLines(l){
-    return getFullRows(l).length;
-}
-
-function getBumpiness(temp){
-    var l=getGameBoard(temp);
-    var bumpiness=0;
-    for(i=1;i<l[0].length;i++){
-        bumpiness+=(Math.abs(getColumnHeight(i,l)-getColumnHeight(i-1,l)));
+function getAggregateHeight(gb){
+    var x=0;
+    var t=0;
+    while(x<(width-1)){
+        t+=getColumnHeight(x,gb);
+        x++;
     }
-    return bumpiness
+    return t;
 }
 
-function getHoles(temp){
+function getCompleteLines(gb){
+    return getFullRows(gb).length;
+}
+
+function getBumpiness(gb){
+    var bumpiness=0;
+    var test=[];
+    var l=gb;
+    // for(i=1;i<l[0].length;i++){
+    //     bumpiness+=(Math.abs(getColumnHeight(i,l)-getColumnHeight(i-1,l)));
+    // }
+    var x=1;
+    while(x<(width-1)){
+        bumpiness+=(Math.abs(getColumnHeight(x,l)-getColumnHeight(x-1,l)));
+        test.push(0);
+        x++;
+    }
+    return bumpiness;
+    //return bumpiness;
+}
+
+function getHoles(gb){
     var holes=0;
-    var l=getGameBoard(temp);
+    var l=gb;
     for(i=0;i<l[0].length;i++){
         for(j=0;j<l.length-1;j++){
             if(l[j][i]==true&&l[j+1][i]==false){
@@ -398,10 +419,11 @@ class Candidate {
     }
 }
 
-var c_holes = -0.356;
+var c_holes = -1.76;
 var c_height = -0.51;
-var c_clear = 0.76;
+var c_clear = 1.06;
 var c_low = 0.25;
+var c_bump = -0.184;
 
 function getBestMove(){
     var candidates=[];
@@ -410,7 +432,7 @@ function getBestMove(){
     var y=pieces[0].pos[1];
     var temp = new Piece([x,y], pieces[0].piecePos, "#B4B3B3", pieces[0].id);
     //duplicate piece and test all x values and rotations at lowest point, assign score and add to array - return highest score
-    while(x<width-1){ //wow much bug (not lol)
+    while((temp.id==4||temp.id==6)?(x<width):(x<width-1)){ //wow much bug (not lol)
         var r=0;
         while(r<4){
             y=pieces[0].pos[1];
@@ -423,8 +445,15 @@ function getBestMove(){
             //check conditions here and push to move candidate array
             //var ms=((c_holes*getHoles())+(c_height*getAggregateHeight())+(c_clear*getCompleteLines())+(c_low*temp.pos[1])); //calculate candidate overall score
             var l=getTempOccupiedSquares(temp);
-            var ms=(-getHoles(l)*c_holes);
-            getAggregateHeight(l);
+            var gb=getGameBoard(l);
+            //var ms=((getHoles(l))*c_holes)+(c_low*temp.pos[1])+(c_clear*getCompleteLines(l));
+            var ms=((getHoles(gb)*c_holes)+(c_clear*getCompleteLines(gb))+/*(c_height*getAggregateHeight(gb))*/+(c_low*temp.pos[1])+(c_bump*getBumpiness(gb)));
+
+            //AGGREGATE HEIGHT LAST 2 LINES NOT REALLY WORKING SDFISJFOJSEFIJDOSFJODSIJFOISDJFIO
+
+            //test.push(getAggregateHeight(l));
+            debug(ms);
+            //debug(getAggregateHeight(l));
             //console.log((getAggregateHeight(l)));
             debugger;
             //most likely errors around here (ms), make sure to check b/c thats what it seems like
@@ -458,7 +487,7 @@ function autoMove(){
 
 //INIT
 getBestMove();
-var autoSpeed=250;
+var autoSpeed=100;
 
 //   main game loop    //
 function loop(){
